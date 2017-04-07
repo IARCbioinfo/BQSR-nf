@@ -66,7 +66,7 @@ process base_quality_score_recalibration {
     tag { file_tag }
         
     input:
-    file("${file_tag}.bam") from bam_files
+    file bam from bam_files
     file("${file_tag}.bam.bai") from bai_files
     output:
     file("${file_tag_new}_recal.table") into recal_table_files
@@ -77,7 +77,7 @@ process base_quality_score_recalibration {
     publishDir params.out_folder, mode: 'move'
 
     shell:
-    file_tag=infile.baseName
+    file_tag=bam.baseName
     file_tag_new=file_tag+'_BQSR'
     '''
     indelsvcf=(`ls !{params.GATK_bundle}/*indels*.vcf* | grep -v ".tbi" | grep -v ".idx"`)
