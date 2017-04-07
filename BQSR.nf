@@ -52,10 +52,9 @@ fasta_ref_pac = file( params.fasta_ref+'.pac' )
 fasta_ref_alt = file( params.fasta_ref+'.alt' )
 
 if (file(params.input_folder).listFiles().findAll { it.name ==~ /.*bam/ }.size() > 0){
-       println "BAM files found, proceed with realignment"; mode ='bam'
-       bam_files = Channel.fromPath( params.input_folder+'/*.bam'
-       bai_files = Channel.fromPath( params.input_folder+'/*.bai'
-       )
+       println "BAM files found, proceed with realignment";
+       bam_files = Channel.fromPath( params.input_folder+'/*.bam');
+       bai_files = Channel.fromPath( params.input_folder+'/*.bai')
 }else{
        println "ERROR: input folder contains no fastq nor BAM files"; System.exit(0)
 }
