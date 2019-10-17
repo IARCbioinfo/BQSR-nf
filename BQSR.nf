@@ -1,6 +1,4 @@
 #! /usr/bin/env nextflow
-// usage : ./BQSR.nf --input_folder input/ --cpu 8 --mem 32 --fasta_ref hg19.fasta
-
 // requirement:
 // - gatk4
 // - samblaster
@@ -10,12 +8,12 @@
 params.help         = null
 params.input_folder = '.'
 params.ref          = 'hg19.fasta'
-params.cpu          = 8
+params.cpu          = 2
 params.mem          = 32
 params.output_folder   = "."
-params.bed          = ""
 params.snp_vcf      = "dbsnp.vcf"
 params.indel_vcf    = "Mills_1000G_indels.vcf"
+params.multiqc_config = 'NO_FILE'
 
 
 if (params.help) {
@@ -25,15 +23,19 @@ if (params.help) {
     log.info '-------------------------------------------------------------'
     log.info ''
     log.info 'Usage: '
-    log.info 'nextflow run BQSR.nf --input_folder input/ --fasta_ref hg19.fasta [--cpu 8] [--mem 32] [--out_folder output/]'
+    log.info 'nextflow run BQSR.nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
     log.info ''
     log.info 'Mandatory arguments:'
-    log.info '    --input_folder   FOLDER                  Folder containing BAM or fastq files to be aligned.'
-    log.info '    --ref          FILE                    Reference fasta file (with index).'
+    log.info '    --input_folder   FOLDER                 Folder containing BAM or fastq files to be aligned.'
+    log.info '    --ref            FILE                   Reference fasta file (with index).'
     log.info 'Optional arguments:'
-    log.info '    --cpu          INTEGER                 Number of cpu used by bwa mem and sambamba (default: 8).'
-    log.info '    --mem          INTEGER                 Size of memory used by sambamba (in GB) (default: 32).'
-    log.info '    --output_folder     STRING                Output folder (default: results_alignment).'
+    log.info '    --cpu            INTEGER                Number of cpu used by bwa mem and sambamba (default: 8).'
+    log.info '    --mem            INTEGER                Size of memory used by sambamba (in GB) (default: 32).'
+    log.info '    --snp_vcf        STRING                 path to SNP VCF from GATK bundle (default : dbsnp.vcf)'
+    log.info '    --indel_vcf      STRING                 path to indel VCF from GATK bundle (default : Mills_1000G_indels.vcf)'
+    log.info '    --output_folder  STRING                Output folder (default: results_alignment).'
+    log.info '    --multiqc_config STRING                 config yaml file for multiqc (default : none)'
+    log.info ''
     log.info ''
     exit 1
 }
@@ -54,6 +56,9 @@ known_snps         = file( params.snp_vcf )
 known_snps_index   = file( params.snp_vcf+'.tbi' )
 known_indels       = file( params.indel_vcf )
 known_indels_index = file( params.indel_vcf+'.tbi' )
+
+//multiqc config file
+ch_config_for_multiqc = file(params.multiqc_config)
 
 if (file(params.input_folder).listFiles().findAll { it.name ==~ /.*bam/ }.size() > 0){
        println "BAM files found, proceed with realignment";
@@ -116,14 +121,20 @@ process multiqc_final {
     input:
     file BQSR_results from recal_table_files.collect()
     file BQSR_results_plots from recal_plots_files.collect()
+    file multiqc_config from ch_config_for_multiqc    
 
     output:
     file("*report.html") into final_output
     file("multiqc_BQSR_report_data/") into final_output_data
 
     shell:
+    if( multiqc_config.name=='NO_FILE' ){
+        opt = ""
+    }else{
+        opt = "--config ${multiqc_config}"
+    }
     '''
-    multiqc . -n multiqc_BQSR_report.html
+    multiqc . -n multiqc_BQSR_report.html -m gatk !{opt} --comment "GATK base quality score recalibration QC report"
     '''
 }
 
