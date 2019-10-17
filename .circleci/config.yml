@@ -1,0 +1,18 @@
+version: 2
+
+jobs:
+        build:
+                machine: true
+                steps:
+                        - checkout
+                        - run: cd ~ ; wget -qO- get.nextflow.io | bash ; chmod 755 nextflow ; sudo ln -s ~/nextflow /usr/local/bin/ ; sudo apt-get install graphviz
+                        - run: cd ~ && git clone https://github.com/iarcbioinfo/data_test.git
+                        - run: echo " docker.runOptions = '-u $(id -u):$(id -g)' " > ~/.nextflow/config
+                        - run: cd ~/project/ ; docker build -t iarcbioinfo/bqsr-nf .
+                        - run: cd ; nextflow run ~/project/BQSR.nf --help
+                        - run: cd ; nextflow run ~/project/BQSR.nf -with-docker iarcbioinfo/bqsr-nf --input_folder ~/data_test/BAM/ --output_folder BAM_bqsr --cpu 2 --mem 4 --snp_vcf ~/data_test/REF/dbsnp_138.17_7572000-7591000.vcf.gz --indel_vcf ~/data_test/REF/1000G_phase1.indels.17_7572000-7591000.sites.vcf.gz --ref ~/data_test/REF/17_7572000-7591000.fasta -with-dag dag_bqsr.png
+                        - run: cd ; nextflow run ~/project/BQSR.nf -with-docker iarcbioinfo/bqsr-nf --input_folder ~/data_test/BAM/ --output_folder BAM_bqsr --cpu 2 --mem 4 --snp_vcf ~/data_test/REF/dbsnp_138.17_7572000-7591000.vcf.gz --indel_vcf ~/data_test/REF/1000G_phase1.indels.17_7572000-7591000.sites.vcf.gz --ref ~/data_test/REF/17_7572000-7591000.fasta -with-dag dag_STAR_bqsr.html
+                        - run: cd ; cp ~/dag* ~/project/.
+                        - deploy:
+                                branch: [master, dev]
+                                command: chmod +x deploy.sh && ./deploy.sh
