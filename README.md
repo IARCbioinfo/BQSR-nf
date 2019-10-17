@@ -17,6 +17,8 @@ Nextflow pipeline for base quality score recalibration and quality control
 3. [*GATK4*](https://software.broadinstitute.org/gatk/guide/quickstart) must be in the PATH variable
 4. [GATK bundle](https://software.broadinstitute.org/gatk/download/bundle) VCF files with lists of indels and SNVs (recommended: 1000 genomes indels, dbsnp VCF)
 
+You can provide a config file to customize the multiqc report (see https://multiqc.info/docs/#configuring-multiqc).
+
 ## Input 
  | Type      | Description     |
   |-----------|---------------|
@@ -39,6 +41,7 @@ Nextflow pipeline for base quality score recalibration and quality control
 |--output_folder   | . | output folder for aligned BAMs|
 |--snp_vcf |  dbsnp.vcf | VCF file with known variants for GATK BQSR |
 |--indel_vcf |  Mills_100G_indels.vcf | VCF file with known indels for GATK BQSR |
+|--multiqc_config   |  null | config yaml file for multiqc | 
 
 * #### Flags
 
@@ -57,14 +60,13 @@ nextflow run iarcbioinfo/BQSR-nf --input_folder bam --ref ref.fa --snp_vcf GATK_
   |-----------|---------------|
   | BAM/file.bam    | BAM files of alignments or realignments |
   | BAM/file.bam.bai    | BAI files of alignments or realignments |
-  | QC/multiqc_posttrim_report.html      |     multiqc report before trimming | 
-  | QC/multiqc_posttrim_report_data      |  folder with data used to compute multiqc report before trimming |
-  | QC/bam/file_readdist.txt, file_clipping_profile\*, file_jun_stauration\*| RSeQC reports |
+  | QC/multiqc_BQSR_report.html      |     multiqc report  | 
+  | QC/multiqc_BQSR_report_data      |  folder with data used to compute multiqc report |
   | QC/BAM/BQSR/file_recal.table | table of scores before recalibration   |
   | QC/BAM/BQSR/file_post_recal.table   | table of scores after recalibration |
   | QC/BAM/BQSR/file_recalibration_plots.pdf   |  before/after recalibration plots   |
           
-The output_folder directory contains three subfolders: BAM, counts, and QC
+The output_folder directory contains two subfolders: BAM and QC
 
 ## Directed Acyclic Graph
 
