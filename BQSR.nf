@@ -37,7 +37,7 @@ if (params.help) {
     log.info '    --multiqc_config STRING                 config yaml file for multiqc (default : none)'
     log.info ''
     log.info ''
-    exit 1
+    exit 0
 }
 
 //read files
