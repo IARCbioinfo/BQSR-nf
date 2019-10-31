@@ -1,25 +1,20 @@
 #! /usr/bin/env nextflow
-// usage : ./BQSR.nf --input_folder input/ --cpu 8 --mem 32 --fasta_ref hg19.fasta
-/*
-vim: syntax=groovy
--*- mode: groovy;-*- */
-
 // requirement:
-// - samtools
+// - gatk4
 // - samblaster
 // - sambamba
 
 //default values
 params.help         = null
 params.input_folder = '.'
-params.fasta_ref    = 'hg19.fasta'
-params.cpu          = 8
+params.ref          = 'hg19.fasta'
+params.cpu          = 2
 params.mem          = 32
-params.mem_sambamba = 1
-params.out_folder   = "."
-params.intervals    = ""
-params.GATK_bundle  = "bundle"
-params.GATK_folder  = "."
+params.output_folder   = "."
+params.snp_vcf      = "dbsnp.vcf"
+params.indel_vcf    = "Mills_1000G_indels.vcf"
+params.multiqc_config = 'NO_FILE'
+
 
 if (params.help) {
     log.info ''
@@ -28,34 +23,50 @@ if (params.help) {
     log.info '-------------------------------------------------------------'
     log.info ''
     log.info 'Usage: '
-    log.info 'nextflow run BQSR.nf --input_folder input/ --fasta_ref hg19.fasta [--cpu 8] [--mem 32] [--out_folder output/]'
+    log.info 'nextflow run BQSR.nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
     log.info ''
     log.info 'Mandatory arguments:'
-    log.info '    --input_folder   FOLDER                  Folder containing BAM or fastq files to be aligned.'
-    log.info '    --fasta_ref          FILE                    Reference fasta file (with index).'
+    log.info '    --input_folder   FOLDER                 Folder containing BAM or fastq files to be aligned.'
+    log.info '    --ref            FILE                   Reference fasta file (with index).'
     log.info 'Optional arguments:'
-    log.info '    --cpu          INTEGER                 Number of cpu used by bwa mem and sambamba (default: 8).'
-    log.info '    --mem          INTEGER                 Size of memory used by sambamba (in GB) (default: 32).'
-    log.info '    --out_folder     STRING                Output folder (default: results_alignment).'
+    log.info '    --cpu            INTEGER                Number of cpu used by bwa mem and sambamba (default: 8).'
+    log.info '    --mem            INTEGER                Size of memory used by sambamba (in GB) (default: 32).'
+    log.info '    --snp_vcf        STRING                 path to SNP VCF from GATK bundle (default : dbsnp.vcf)'
+    log.info '    --indel_vcf      STRING                 path to indel VCF from GATK bundle (default : Mills_1000G_indels.vcf)'
+    log.info '    --output_folder  STRING                Output folder (default: results_alignment).'
+    log.info '    --multiqc_config STRING                 config yaml file for multiqc (default : none)'
     log.info ''
-    exit 1
+    log.info ''
+    exit 0
 }
 
 //read files
-fasta_ref = file(params.fasta_ref)
-fasta_ref_fai = file( params.fasta_ref+'.fai' )
-fasta_ref_sa = file( params.fasta_ref+'.sa' )
-fasta_ref_bwt = file( params.fasta_ref+'.bwt' )
-fasta_ref_ann = file( params.fasta_ref+'.ann' )
-fasta_ref_amb = file( params.fasta_ref+'.amb' )
-fasta_ref_pac = file( params.fasta_ref+'.pac' )
-fasta_ref_alt = file( params.fasta_ref+'.alt' )
+ref = file(params.ref)
+ref_fai = file( params.ref+'.fai' )
+ref_dict= file( params.ref.replaceFirst(/fasta/, "").replaceFirst(/fa/, "") +'dict')
+//ref_sa  = file( params.ref+'.sa' )
+//ref_bwt = file( params.ref+'.bwt' )
+//ref_ann = file( params.ref+'.ann' )
+//ref_amb = file( params.ref+'.amb' )
+//ref_pac = file( params.ref+'.pac' )
+//ref_alt = file( params.ref+'.alt' )
+
+//get know site VCFs from GATK bundle
+known_snps         = file( params.snp_vcf )
+known_snps_index   = file( params.snp_vcf+'.tbi' )
+known_indels       = file( params.indel_vcf )
+known_indels_index = file( params.indel_vcf+'.tbi' )
+
+//multiqc config file
+ch_config_for_multiqc = file(params.multiqc_config)
 
 if (file(params.input_folder).listFiles().findAll { it.name ==~ /.*bam/ }.size() > 0){
-       println "BAM files found, proceed with realignment"; mode ='bam'
-       bam_files = Channel.fromPath( params.input_folder+'/*.bam'
-       bai_files = Channel.fromPath( params.input_folder+'/*.bai'
-       )
+       println "BAM files found, proceed with realignment";
+       //bam_files = Channel.fromPath( params.input_folder+'/*.bam');
+       //bai_files = Channel.fromPath( params.input_folder+'/*.bai')
+	bam_bai_files = Channel.fromFilePairs("${params.input_folder}/*{.bam,.bai}")
+			   .map { row -> tuple(row[1][0], row[1][1]) }
+
 }else{
        println "ERROR: input folder contains no fastq nor BAM files"; System.exit(0)
 }
@@ -65,32 +76,78 @@ process base_quality_score_recalibration {
     cpus params.cpu
     memory params.mem+'G'
     tag { file_tag }
-        
+    
+    publishDir "$params.output_folder/BAM/", mode: 'copy', pattern: "*bam*"
+    publishDir "$params.output_folder/QC/BAM/BQSR/", mode: 'copy',
+	saveAs: {filename -> 
+		if (filename.indexOf("table") > 0) "$filename"
+		else if (filename.indexOf("plots") > 0) "$filename"
+		else null
+	}
+
     input:
-    file("${file_tag}.bam") from bam_files
-    file("${file_tag}.bam.bai") from bai_files
+    set file(bam), file(bai) from bam_bai_files
+    file known_snps
+    file known_snps_index
+    file known_indels
+    file known_indels_index
+    file ref
+    file ref_fai
+    file ref_dict
+
     output:
-    file("${file_tag_new}_recal.table") into recal_table_files
-    file("${file_tag_new}_post_recal.table") into recal_table_post_files
-    file("${file_tag_new}_recalibration_plots.pdf") into recal_plots_files
-    set val(file_tag_new), file("${file_tag_new}.bam") into recal_bam_files
-    file("${file_tag_new}.bam.bai") into recal_bai_files
-    publishDir params.out_folder, mode: 'move'
+    file("*_recal.table") into recal_table_files
+    file("*plots.pdf") into recal_plots_files
+    set val(file_tag_new), file("${file_tag_new}.bam"), file("${file_tag_new}.bam.bai") into final_bam_bai_files
 
     shell:
-    file_tag=infile.baseName
-    file_tag_new=file_tag+'_BQSR'
+    file_tag=bam.baseName
+    file_tag_new=file_tag+'_BQSRecalibrated'
     '''
-    indelsvcf=(`ls !{params.GATK_bundle}/*indels*.vcf* | grep -v ".tbi" | grep -v ".idx"`)
-    dbsnpvcfs=(`ls !{params.GATK_bundle}/*dbsnp*.vcf* | grep -v ".tbi" | grep -v ".idx"`)
-    dbsnpvcf=${dbsnpvcfs[@]:(-1)}
-    knownSitescom=''
-    for ll in $indelsvcf; do knownSitescom=$knownSitescom' -knownSites '$ll; done
-    knownSitescom=$knownSitescom' -knownSites '$dbsnpvcf
-    java -jar !{params.GATK_folder}/GenomeAnalysisTK.jar -T BaseRecalibrator -nct !{params.cpu} -R !{params.fasta_ref} -I !{file_tag}.bam $knownSitescom -L !{params.intervals} -o !{file_tag_new}_recal.table
-    java -jar !{params.GATK_folder}/GenomeAnalysisTK.jar -T BaseRecalibrator -nct !{params.cpu} -R !{params.fasta_ref} -I !{file_tag}.bam $knownSitescom -BQSR !{file_tag_new}_recal.table -L !{params.intervals} -o !{file_tag_new}_post_recal.table		
-    java -jar !{params.GATK_folder}/GenomeAnalysisTK.jar -T AnalyzeCovariates -R !{params.fasta_ref} -before !{file_tag_new}_recal.table -after !{file_tag_new}_post_recal.table -plots !{file_tag_new}_recalibration_plots.pdf	
-    java -jar !{params.GATK_folder}/GenomeAnalysisTK.jar -T PrintReads -nct !{params.cpu} -R !{params.fasta_ref} -I !{file_tag}.bam -BQSR !{file_tag_new}_recal.table -L !{params.intervals} -o !{file_tag_new}.bam
+    gatk BaseRecalibrator --java-options "-Xmx!{params.mem}G" -R !{ref} -I !{file_tag}.bam --known-sites !{known_snps} --known-sites !{known_indels} -O !{file_tag}_recal.table
+    gatk ApplyBQSR --java-options "-Xmx!{params.mem}G" -R !{ref} -I !{file_tag}.bam --bqsr-recal-file !{file_tag}_recal.table -O !{file_tag_new}.bam
+    gatk BaseRecalibrator --java-options "-Xmx!{params.mem}G" -R !{ref} -I !{file_tag_new}.bam --known-sites !{known_snps} --known-sites !{known_indels} -O !{file_tag_new}_recal.table		
+    gatk AnalyzeCovariates --java-options "-Xmx!{params.mem}G" -before !{file_tag}_recal.table -after !{file_tag_new}_recal.table -plots !{file_tag_new}_recalibration_plots.pdf	
     mv !{file_tag_new}.bai !{file_tag_new}.bam.bai
     '''
 }
+
+process multiqc_final {
+    cpus 2
+    memory '1G'
+
+    publishDir "${params.output_folder}/QC/BAM/", mode: 'copy'
+
+    input:
+    file BQSR_results from recal_table_files.collect()
+    file BQSR_results_plots from recal_plots_files.collect()
+    file multiqc_config from ch_config_for_multiqc    
+
+    output:
+    file("*report.html") into final_output
+    file("multiqc_BQSR_report_data/") into final_output_data
+
+    shell:
+    if( multiqc_config.name=='NO_FILE' ){
+        opt = ""
+    }else{
+        opt = "--config ${multiqc_config}"
+    }
+    '''
+    multiqc . -n multiqc_BQSR_report.html -m gatk !{opt} --comment "GATK base quality score recalibration QC report"
+    '''
+}
+
+// Display completion message
+workflow.onComplete {
+  log.info "N E X T F L O W  ~  version ${workflow.nextflow.version} ${workflow.nextflow.build}"
+  //log.info "iarcbioinfo/BQSR-nf ~ " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
+  log.info "Completed at: " + workflow.complete
+  log.info "Duration    : " + workflow.duration
+  log.info "Success     : " + workflow.success
+  log.info "Exit status : " + workflow.exitStatus
+  log.info "Error report: " + (workflow.errorReport ?: '-')
+}
+
+
+
