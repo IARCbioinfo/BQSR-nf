@@ -73,7 +73,7 @@ if (file(params.input_folder).listFiles().findAll { it.name ==~ /.*bam/ }.size()
        println "BAM files found, proceed with realignment";
        //bam_files = Channel.fromPath( params.input_folder+'/*.bam');
        //bai_files = Channel.fromPath( params.input_folder+'/*.bai')
-	bam_bai_files = Channel.fromFilePairs("${params.input_folder}/*{.bam,.bai}")
+	bam_bai_files = Channel.fromFilePairs("${params.input_folder}/*.{bam,bai}") { file -> file.name.replaceAll(/.bam|.bai$/,'') }
 			   .map { row -> tuple(row[1][0], row[1][1]) }
 
 }else{
