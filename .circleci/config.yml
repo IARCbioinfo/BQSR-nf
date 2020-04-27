@@ -10,8 +10,8 @@ jobs:
                         - run: echo " docker.runOptions = '-u $(id -u):$(id -g)' " > ~/.nextflow/config
                         - run: cd ~/project/ ; docker build -t iarcbioinfo/bqsr-nf .
                         - run: cd ; nextflow run ~/project/BQSR.nf --help
-                        - run: cd ; nextflow run ~/project/BQSR.nf -with-docker iarcbioinfo/bqsr-nf --input_folder ~/data_test/BAM/BAM_realigned_17/ --output_folder BAM_bqsr --cpu 2 --mem 4 --snp_vcf ~/data_test/REF/dbsnp_138.17_7572000-7591000_nochr.vcf.gz --indel_vcf ~/data_test/REF/1000G_phase1.indels.17_7572000-7591000_nochr.sites.vcf.gz --ref ~/data_test/REF/17_7572000-7591000.fasta -with-dag dag_bqsr.png
-                        - run: cd ; nextflow run ~/project/BQSR.nf -with-docker iarcbioinfo/bqsr-nf --input_folder ~/data_test/BAM/BAM_realigned_17/ --output_folder BAM_bqsr --cpu 2 --mem 4 --snp_vcf ~/data_test/REF/dbsnp_138.17_7572000-7591000_nochr.vcf.gz --indel_vcf ~/data_test/REF/1000G_phase1.indels.17_7572000-7591000_nochr.sites.vcf.gz --ref ~/data_test/REF/17_7572000-7591000.fasta -with-dag dag_STAR_bqsr.html
+                        - run: cd ; nextflow run ~/project/BQSR.nf -with-docker iarcbioinfo/bqsr-nf --input_folder ~/data_test/BAM/BAM_realigned_17/ --output_folder BAM_bqsr --cpu 2 --mem 4 --snp_vcf ~/data_test/REF/dbsnp_138.17_7572000-7591000_nochr.vcf.gz --indel_vcf ~/data_test/REF/1000G_phase1.indels.17_7572000-7591000_nochr.sites.vcf.gz --ref ~/data_test/REF/17.fasta -with-dag dag_bqsr.png
+                        - run: cd ; nextflow run ~/project/BQSR.nf -with-docker iarcbioinfo/bqsr-nf --input_folder ~/data_test/BAM/BAM_realigned_17/ --output_folder BAM_bqsr --cpu 2 --mem 4 --snp_vcf ~/data_test/REF/dbsnp_138.17_7572000-7591000_nochr.vcf.gz --indel_vcf ~/data_test/REF/1000G_phase1.indels.17_7572000-7591000_nochr.sites.vcf.gz --ref ~/data_test/REF/17.fasta -with-dag dag_STAR_bqsr.html
                         - run: cd ; cp ~/dag* ~/project/.
                         - deploy:
                                 branch: [master, dev]
