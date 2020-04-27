@@ -15,15 +15,24 @@ params.snp_vcf      = "dbsnp.vcf"
 params.indel_vcf    = "Mills_1000G_indels.vcf"
 params.multiqc_config = 'NO_FILE'
 
-
+log.info ""
+log.info "-----------------------------------------------------------------"
+log.info "BQSR-nf 1.1: BASE QUALITY SCORE RECALIBRATION           "
+log.info "-----------------------------------------------------------------"
+log.info "Copyright (C) IARC/WHO"
+log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
+log.info "This is free software, and you are welcome to redistribute it"
+log.info "under certain conditions; see LICENSE for details."
+log.info "--------------------------------------------------------"
+log.info ""
 if (params.help) {
     log.info ''
     log.info '-------------------------------------------------------------'
-    log.info 'NEXTFLOW BASE QUALITY SCORE RECALIBRATION SCRIPT'
+    log.info "  USAGE                                                 "
     log.info '-------------------------------------------------------------'
     log.info ''
     log.info 'Usage: '
-    log.info 'nextflow run BQSR.nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
+    log.info 'nextflow run iarcbioinfo/BQSR-nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
     log.info ''
     log.info 'Mandatory arguments:'
     log.info '    --input_folder   FOLDER                 Folder containing BAM or fastq files to be aligned.'
@@ -64,7 +73,7 @@ if (file(params.input_folder).listFiles().findAll { it.name ==~ /.*bam/ }.size()
        println "BAM files found, proceed with realignment";
        //bam_files = Channel.fromPath( params.input_folder+'/*.bam');
        //bai_files = Channel.fromPath( params.input_folder+'/*.bai')
-	bam_bai_files = Channel.fromFilePairs("${params.input_folder}/*{.bam,.bai}")
+	bam_bai_files = Channel.fromFilePairs("${params.input_folder}/*.{bam,bai}") { file -> file.name.replaceAll(/.bam|.bai$/,'') }
 			   .map { row -> tuple(row[1][0], row[1][1]) }
 
 }else{
@@ -137,17 +146,3 @@ process multiqc_final {
     multiqc . -n multiqc_BQSR_report.html -m gatk !{opt} --comment "GATK base quality score recalibration QC report"
     '''
 }
-
-// Display completion message
-workflow.onComplete {
-  log.info "N E X T F L O W  ~  version ${workflow.nextflow.version} ${workflow.nextflow.build}"
-  //log.info "iarcbioinfo/BQSR-nf ~ " + this.grabRevision() + (workflow.commitId ? " [${workflow.commitId}]" : "")
-  log.info "Completed at: " + workflow.complete
-  log.info "Duration    : " + workflow.duration
-  log.info "Success     : " + workflow.success
-  log.info "Exit status : " + workflow.exitStatus
-  log.info "Error report: " + (workflow.errorReport ?: '-')
-}
-
-
-
