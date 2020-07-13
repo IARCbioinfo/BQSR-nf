@@ -1,13 +1,13 @@
 # BQSR-nf
-Nextflow script for base quality score recalibration of bam files using GATK
 
 ## Nextflow pipeline for base quality score recalibration with GATK processing
 [![CircleCI](https://circleci.com/gh/IARCbioinfo/BQSR-nf/tree/master.svg?style=svg)](https://circleci.com/gh/IARCbioinfo/BQSR-nf/tree/master)
 [![Docker Hub](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/iarcbioinfo/bqsr-nf/)
+[![https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg](https://www.singularity-hub.org/static/img/hosted-singularity--hub-%23e32929.svg)](https://singularity-hub.org/collections/4284)
 
 ## Decription
 
-Nextflow pipeline for base quality score recalibration and quality control
+Nextflow pipeline for base quality score recalibration and quality control of bam files using GATK
 
 ## Dependencies
 
@@ -70,7 +70,7 @@ The output_folder directory contains two subfolders: BAM and QC
 
 ## Directed Acyclic Graph
 
-[![DAG BQSR](dag_BQSR.png)](http://htmlpreview.github.io/?https://github.com/IARCbioinfo/BQSR-nf/blob/dev/dag_BQSR.html)
+[![DAG BQSR](dag_bqsr.png)](http://htmlpreview.github.io/?https://github.com/IARCbioinfo/BQSR-nf/blob/master/dag_STAR_bqsr.html)
 
 ## Contributions
 
