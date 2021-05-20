@@ -1,0 +1,57 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/IARCbioinfo/BQSR-nf/master/nextflow_schema.json",
+    "title": "BQSR-nf pipeline parameters",
+    "description": "This pipeline performs base quality score recalibration and quality control of bam files using GATK",
+    "type": "object",
+    "properties": {
+        "input_folder": {
+            "type": "string",
+            "description": "Folder with bam files",
+            "default": "."
+        },
+        "ref": {
+            "type": "string",
+            "description": "Reference genome fasta file for GATK",
+            "default": "hg19.fasta"
+        },
+        "cpu": {
+            "type": "integer",
+            "description": "Number of CPUs",
+            "default": "2"
+        },
+        "mem": {
+            "type": "integer",
+            "description": "Memory for mapping",
+            "default": "32"
+        },
+        "output_folder": {
+            "type": "string",
+            "description": "Output folder for aligned BAMs",
+            "default": "."
+        },
+        "snp_vcf": {
+            "type": "string",
+            "description": "Path to VCF file with known variants for GATK BQSR",
+            "default": "dbsnp.vcf"
+        },
+        "indel_vcf": {
+            "type": "string",
+            "description": "Path to VCF file with known indels for GATK BQSR",
+            "default": "Mills_1000G_indels.vcf"
+        },
+        "multiqc_config": {
+            "type": "string",
+            "description": "Path to config yaml file for multiqc",
+            "default": "NO_FILE"
+        },
+        "help": {
+            "type": "boolean",
+            "description": "Display help"
+        }
+    },
+    "required": [
+        "ref",
+        "input_folder"
+    ]
+}
