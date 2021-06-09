@@ -74,7 +74,18 @@
             "title": "Pipeline_params",
             "type": "object",
             "description": "Pipeline parameters",
-            "default": ""
+            "default": "",
+            "properties": {
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "Path to config yaml file for multiqc",
+                    "default": "NO_FILE"
+                },
+                "help": {
+                    "type": "boolean",
+                    "description": "Display help"
+                }
+            }
         }
     },
     "allOf": [
@@ -90,16 +101,5 @@
         {
             "$ref": "#/definitions/pipeline_params"
         }
-    ],
-    "properties": {
-        "multiqc_config": {
-            "type": "string",
-            "description": "Path to config yaml file for multiqc",
-            "default": "NO_FILE"
-        },
-        "help": {
-            "type": "boolean",
-            "description": "Display help"
-        }
-    }
+    ]
 }
