@@ -1,0 +1,11 @@
+reports:
+    "QC/BAM/multiqc_BQSR_report.html":
+        display: "MultiQC BQSR report"
+    "QC/BAM/BQSR/**_recal.table":
+        display: "Before BQSR recalibration table"
+        mimeType: txt
+    "QC/BAM/BQSR/**_abra_BQSRecalibrated_recal.table":
+        display: "After BQSR recalibration table"
+        mimeType: txt
+    "QC/BAM/BQSR/**_abra_BQSRecalibrated_recalibration_plots.pdf":
+        display: "Before and after BQSR recalibration plots"
