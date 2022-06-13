@@ -66,7 +66,7 @@ nextflow run iarcbioinfo/BQSR-nf --input_folder bam --ref ref.fa --snp_vcf GATK_
   | QC/multiqc_BQSR_report.html      |     multiqc report  | 
   | QC/multiqc_BQSR_report_data      |  folder with data used to compute multiqc report |
   | QC/BAM/BQSR/file_recal.table | table of scores before recalibration   |
-  | QC/BAM/BQSR/file_post_recal.table   | table of scores after recalibration |
+  | QC/BAM/BQSR/file_BQSRecalibrated_recal.table   | table of scores after recalibration |
   | QC/BAM/BQSR/file_recalibration_plots.pdf   |  before/after recalibration plots   |
           
 The output_folder directory contains two subfolders: BAM and QC
