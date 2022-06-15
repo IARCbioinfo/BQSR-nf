@@ -3,9 +3,9 @@ reports:
         display: "MultiQC BQSR report"
     "QC/BAM/BQSR/**_recal.table":
         display: "Before BQSR recalibration table"
-        mimeType: text
+        mimeType: "text"
     "QC/BAM/BQSR/**_abra_BQSRecalibrated_recal.table":
         display: "After BQSR recalibration table"
-        mimeType: "txt"
+        mimeType: "text/txt"
     "QC/BAM/BQSR/**_abra_BQSRecalibrated_recalibration_plots.pdf":
         display: "Before and after BQSR recalibration plots"
