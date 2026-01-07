@@ -64,7 +64,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     memory "${params.mem}G"
 
     input:
-    tuple val(bam_tag) path(bam), path(bai)
+    tuple val(bam_tag), path(bam), path(bai)
     path known_snps
 //    path known_snps_index
     path known_indels
@@ -85,6 +85,11 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     """
 	#!/bin/bash
     set -euo pipefail
+
+	if [ ! -f "${bam}.bai" ]; then
+		ln -s ${bai} ${bam}.bai
+	fi
+
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
@@ -97,13 +102,13 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
         -I ${bam} \
-        --bqsr-recal-file ${file_tag}_recal.table \
+        --bqsr-recal-file ${bam_tag}_recal.table \
         -O ${bam_tag}_BQSRecalibrated.bam
 
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${file_tag_new}.bam \
+        -I ${bam_tag}_BQSRecalibrated.bam \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
         -O ${bam_tag}_recal.table
@@ -125,7 +130,7 @@ process MULTIQC_FINAL {
     input:
     path recal_tables
     path recal_plots
-    path multiqc_config
+    path multiqc_config optional true
 
     output:
     path "*report.html", emit: report
@@ -136,7 +141,7 @@ process MULTIQC_FINAL {
     script:
     """
     set -euo pipefail
-	config_file='${multiqc}'
+	config_file='${multiqc_config:-}'
   	if [ "\$(basename "\$config_file")" = "NO_FILE" ]; then
         	opt=""
     	else
