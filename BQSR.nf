@@ -90,24 +90,21 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 		ln -s ${bai} ${bam}.bai
 	fi
 
-	echo "[INFO] Repairing read groups for GATK compatibility"
-	samtools addreplacerg \
-        --RGID ${bam_tag} \
-        --RGSM ${bam_tag} \
-        --RGLB lib1 \
-        --RGPL ILLUMINA \
-        --RGPU unit1 \
-        -o ${bam_tag}.rgfixed.bam \
-        ${bam}
+	//echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
 
-	samtools index ${bam_tag}.rgfixed.bam
-
-	echo "[INFO] Running BQSR"
+	gatk AddOrReplaceReadGroups \
+    	-I ${bam} \
+    	-O ${bam_tag}_fixed.bam \
+    	--RGID ${bam_tag} \
+    	--RGLB lib1 \
+    	--RGPL ILLUMINA \
+    	--RGPU unit1 \
+    	--RGSM ${bam_tag}
 
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam}.rgfixed.bam \
+        -I ${bam}_fixed.bam \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
         -O ${bam_tag}_recal.table
@@ -115,9 +112,9 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     gatk ApplyBQSR \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam}.rgfixed.bam \
+        -I ${bam}_fixed.bam \
         --bqsr-recal-file ${bam_tag}_recal.table \
-        -O ${bam_tag}_BQSRecalibrated.bam
+        -O ${bam_tag}_BQSRecalibrated.bam -- CREATE_INDEX true
 
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
