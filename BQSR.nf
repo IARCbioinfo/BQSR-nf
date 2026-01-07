@@ -21,53 +21,6 @@ params.snp_vcf         = 'dbsnp.vcf'
 params.indel_vcf       = 'Mills_1000G_indels.vcf'
 params.multiqc_config  = 'NO_FILE'
 
-// --------------------------------------------------
-// INFO / HELP
-// --------------------------------------------------
-
-log.info ""
-log.info "-----------------------------------------------------------------"
-log.info "BQSR-nf 1.1: BASE QUALITY SCORE RECALIBRATION"
-log.info "-----------------------------------------------------------------"
-log.info "Copyright (C) IARC/WHO"
-log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
-log.info "This is free software, and you are welcome to redistribute it under certain conditions; see LICENSE for details."
-log.info "--------------------------------------------------------"
-log.info ""
-
-if (params.help) {
-    log.info ''
-	log.info '-------------------------------------------------------------'
-    log.info 'Usage:'
-    log.info 'nextflow run iarcbioinfo/BQSR-nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
-	log.info '-------------------------------------------------------------'
-    log.info ''
-	log.info 'Mandatory arguments:'
-    log.info '    --input_folder   FOLDER                 Folder containing BAM or fastq files to be aligned.'
-    log.info '    --ref            FILE                   Reference fasta file (with index).'
-    log.info 'Optional arguments:'
-    log.info '    --cpu            INTEGER                Number of cpu used by bwa mem and sambamba (default: 8).'
-    log.info '    --mem            INTEGER                Size of memory used by sambamba (in GB) (default: 32).'
-    log.info '    --snp_vcf        STRING                 path to SNP VCF from GATK bundle (default : dbsnp.vcf)'
-    log.info '    --indel_vcf      STRING                 path to indel VCF from GATK bundle (default : Mills_1000G_indels.vcf)'
-    log.info '    --output_folder  STRING                Output folder (default: results_alignment).'
-    log.info '    --multiqc_config STRING                 config yaml file for multiqc (default : none)'
-    log.info ''
-    exit 0
-}
-
- else {
-      /* Software information */
-   log.info "input_folder = ${params.input_folder}"
-   log.info "ref          = ${params.ref}"
-   log.info "cpu          = ${params.cpu}"
-   log.info "mem          = ${params.mem}"
-   log.info "output_folder= ${params.output_folder}"
-   log.info "snp_vcf          = ${params.snp_vcf}"
-   log.info "indel_vcf          = ${params.indel_vcf}"
-   log.info "help=${params.help}"
- }
-
 //Header for the IARC tools - logo generated using the following page : http://patorjk.com/software/taag  (ANSI logo generator)
 def IARC_Header (){
      return  """
@@ -203,14 +156,62 @@ process MULTIQC_FINAL {
 // --------------------------------------------------
 
 workflow {
+
   		log.info IARC_Header()
+// --------------------------------------------------
+// INFO / HELP
+// --------------------------------------------------
+
+log.info ""
+log.info "-----------------------------------------------------------------"
+log.info "BQSR-nf 1.1: BASE QUALITY SCORE RECALIBRATION"
+log.info "-----------------------------------------------------------------"
+log.info "Copyright (C) IARC/WHO"
+log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
+log.info "This is free software, and you are welcome to redistribute it under certain conditions; see LICENSE for details."
+log.info "--------------------------------------------------------"
+log.info ""
+
+if (params.help) {
+    log.info ''
+	log.info '-------------------------------------------------------------'
+    log.info 'Usage:'
+    log.info 'nextflow run iarcbioinfo/BQSR-nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
+	log.info '-------------------------------------------------------------'
+    log.info ''
+	log.info 'Mandatory arguments:'
+    log.info '    --input_folder   FOLDER                 Folder containing BAM or fastq files to be aligned.'
+    log.info '    --ref            FILE                   Reference fasta file (with index).'
+    log.info 'Optional arguments:'
+    log.info '    --cpu            INTEGER                Number of cpu used by bwa mem and sambamba (default: 8).'
+    log.info '    --mem            INTEGER                Size of memory used by sambamba (in GB) (default: 32).'
+    log.info '    --snp_vcf        STRING                 path to SNP VCF from GATK bundle (default : dbsnp.vcf)'
+    log.info '    --indel_vcf      STRING                 path to indel VCF from GATK bundle (default : Mills_1000G_indels.vcf)'
+    log.info '    --output_folder  STRING                Output folder (default: results_alignment).'
+    log.info '    --multiqc_config STRING                 config yaml file for multiqc (default : none)'
+    log.info ''
+    exit 0
+}
+
+ else {
+      /* Software information */
+   log.info "input_folder = ${params.input_folder}"
+   log.info "ref          = ${params.ref}"
+   log.info "cpu          = ${params.cpu}"
+   log.info "mem          = ${params.mem}"
+   log.info "output_folder= ${params.output_folder}"
+   log.info "snp_vcf          = ${params.snp_vcf}"
+   log.info "indel_vcf          = ${params.indel_vcf}"
+   log.info "help=${params.help}"
+ }
+
         log.info "Running Base Quality Score Recalibration"
-        bams = Channel.fromPath("${params.bam_folder}/*.bam")
+        bams = Channel.fromPath("${params.input_folder}/*.bam")
 			.map { f -> tuple(f.baseName, f) }
-			.ifEmpty { error "No BAM files found in ${params.bam_folder}" }
-        bais = Channel.fromPath("${params.bam_folder}/*.bam.bai")
+			.ifEmpty { error "No BAM files found in ${params.input_folder}" }
+        bais = Channel.fromPath("${params.input_folder}/*.bam.bai")
             .map { f -> tuple(f.baseName.replace('.bam',''), f) }
-			.ifEmpty { error "No BAI files found in ${params.bam_folder}" }
+			.ifEmpty { error "No BAI files found in ${params.input_folder}" }
         
 		bam_bai = bams.join(bais) // emit tag, bam, bai
         bam_bai.view { "BAM_BAI → $it" }
