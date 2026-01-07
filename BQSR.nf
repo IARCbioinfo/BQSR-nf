@@ -163,13 +163,13 @@ workflow {
 // --------------------------------------------------
 
 log.info ""
-log.info "-----------------------------------------------------------------"
+log.info "----------------------------------------------------------------------------------------------------------------"
 log.info "BQSR-nf 1.1: BASE QUALITY SCORE RECALIBRATION"
-log.info "-----------------------------------------------------------------"
+log.info "----------------------------------------------------------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
 log.info "This is free software, and you are welcome to redistribute it under certain conditions; see LICENSE for details."
-log.info "--------------------------------------------------------"
+log.info "----------------------------------------------------------------------------------------------------------------"
 log.info ""
 
 if (params.help) {
@@ -209,8 +209,8 @@ if (params.help) {
         bams = Channel.fromPath("${params.input_folder}/*.bam")
 			.map { f -> tuple(f.baseName, f) }
 			.ifEmpty { error "No BAM files found in ${params.input_folder}" }
-        bais = Channel.fromPath("${params.input_folder}/*.bam.bai")
-            .map { f -> tuple(f.baseName.replace('.bam',''), f) }
+        bais = Channel.fromPath("${params.input_folder}/*.bai")
+            .map { f -> tuple(f.baseName, f) }
 			.ifEmpty { error "No BAI files found in ${params.input_folder}" }
         
 		bam_bai = bams.join(bais) // emit tag, bam, bai
