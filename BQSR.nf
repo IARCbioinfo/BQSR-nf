@@ -223,7 +223,7 @@ if (params.help) {
   //     known_snps_index,
         known_indels,
   //      known_indels_index,
-        ref,
+        ref
   //      ref_fai,
   //      ref_dict
     )
