@@ -117,7 +117,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     output:
 	path("${bam_tag}_BQSRecalibrated.bam"), emit: bam_out
 	path("${bam_tag}_BQSRecalibrated.bai"), emit: bai_out
-    path "*_recal.table", emit: recal_tables
+    path "*_recal.table",  emit: recal_tables
     path "*plots.pdf",     emit: recal_plots
 
     publishDir "${params.output_folder}/BQSR", mode: 'copy'
@@ -160,11 +160,8 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 }
 
 process MULTIQC_FINAL {
-
     cpus 2
     memory '1G'
-
-    publishDir "${params.output_folder}/QC/BAM", mode: 'copy'
 
     input:
     path recal_tables
@@ -175,18 +172,22 @@ process MULTIQC_FINAL {
     path "*report.html", emit: report
     path "multiqc_BQSR_report_data", emit: report_data
 
+    publishDir "${params.output_folder}/QC", mode: 'copy'
+
     script:
     """
-    if [ "${multiqc_config.name}" = "NO_FILE" ]; then
-        opt=""
-    else
-        opt="--config ${multiqc_config}"
-    fi
+    set -euo pipefail
+	config_file='${multiqc}'
+  	if [ "\$(basename "\$config_file")" = "NO_FILE" ]; then
+        	opt=""
+    	else
+        	opt="--config \$config_file"
+    	fi
 
     multiqc . \
         -n multiqc_BQSR_report.html \
         -m gatk \
-        $opt \
+        \$opt \
         --comment "GATK base quality score recalibration QC report"
     """
 }
@@ -197,34 +198,31 @@ process MULTIQC_FINAL {
 
 workflow {
 
-Channel bam_bai_files
-
-if (file(params.input_folder).listFiles().any { it.name.endsWith('.bam') }) {
-
-    bam_bai_files = Channel
-        .fromFilePairs("${params.input_folder}/*.{bam,bai}", size: 2)
-        .map { id, files -> tuple(files[0], files[1]) }
-	println "BAM files found, proceed with realignment";
-} else {
-    error "ERROR: input folder contains no BAM files"
-}
-
-
+        log.info "Running Base Quality Score Recalibration"
+        bams = Channel.fromPath("${params.bam_folder}/*.bam")
+			.map { f -> tuple(f.baseName, f) }
+			.ifEmpty { error "No BAM files found in ${params.bam_folder}" }
+        bais = Channel.fromPath("${params.bam_folder}/*.bam.bai")
+            .map { f -> tuple(f.baseName.replace('.bam',''), f) }
+			.ifEmpty { error "No BAI files found in ${params.bam_folder}" }
+        
+		bam_bai = bams.join(bais) // emit tag, bam, bai
+        bam_bai.view { "BAM_BAI → $it" }
 
     BASE_QUALITY_SCORE_RECALIBRATION(
-        bam_bai_files,
+        bam_bai,
         known_snps,
-        known_snps_index,
+  //     known_snps_index,
         known_indels,
-        known_indels_index,
+  //      known_indels_index,
         ref,
-        ref_fai,
-        ref_dict
+  //      ref_fai,
+  //      ref_dict
     )
 
     MULTIQC_FINAL(
         BASE_QUALITY_SCORE_RECALIBRATION.out.recal_tables.collect(),
         BASE_QUALITY_SCORE_RECALIBRATION.out.recal_plots.collect(),
-        ch_config_for_multiqc
+        multiqc
     )
 }
