@@ -1,9 +1,14 @@
 #!/usr/bin/env nextflow
 
+// Copyright (C) 2026 IARC/WHO
+// This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+// See the GNU General Public License for more details <http://www.gnu.org/licenses/>.
+
 nextflow.enable.dsl = 2
 
 // --------------------------------------------------
-// DEFAULT PARAMETERS
+// PARAMETERS
 // --------------------------------------------------
 
 params.help            = null
@@ -26,9 +31,16 @@ log.info "BQSR-nf 1.1: BASE QUALITY SCORE RECALIBRATION"
 log.info "-----------------------------------------------------------------"
 log.info "Copyright (C) IARC/WHO"
 log.info "This program comes with ABSOLUTELY NO WARRANTY; for details see LICENSE"
-log.info "This is free software, and you are welcome to redistribute it"
-log.info "under certain conditions; see LICENSE for details."
-log.info "-----------------------------------------------------------------"
+log.info "This is free software, and you are welcome to redistribute it under certain conditions; see LICENSE for details."
+log.info "--------------------------------------------------------"
+log.info "#################################################################################
+# ██╗ █████╗ ██████╗  ██████╗██████╗ ██╗ ██████╗ ██╗███╗   ██╗███████╗ ██████╗  #
+# ██║██╔══██╗██╔══██╗██╔════╝██╔══██╗██║██╔═══██╗██║████╗  ██║██╔════╝██╔═══██╗ #
+# ██║███████║██████╔╝██║     ██████╔╝██║██║   ██║██║██╔██╗ ██║█████╗  ██║   ██║ #
+# ██║██╔══██║██╔══██╗██║     ██╔══██╗██║██║   ██║██║██║╚██╗██║██╔══╝  ██║   ██║ #
+# ██║██║  ██║██║  ██║╚██████╗██████╔╝██║╚██████╔╝██║██║ ╚████║██║     ╚██████╔╝ #
+# ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═════╝ ╚═╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝╚═╝      ╚═════╝  #
+# Nextflow pipelines for cancer genomics.########################################"
 log.info ""
 
 if (params.help) {
@@ -52,36 +64,35 @@ if (params.help) {
     exit 0
 }
 
+ else {
+      /* Software information */
+   log.info "input_folder = ${params.input_folder}"
+   log.info "ref          = ${params.ref}"
+   log.info "cpu          = ${params.cpu}"
+   log.info "mem          = ${params.mem}"
+   log.info "output_folder= ${params.output_folder}"
+   log.info "snp_vcf          = ${params.snp_vcf}"
+   log.info "indel_vcf          = ${params.indel_vcf}"
+   log.info "help=${params.help}"
+ }
+
 // --------------------------------------------------
-// REFERENCE FILES
+// FILE DEFINITION
 // --------------------------------------------------
 
 ref          = file(params.ref)
 ref_fai      = file("${params.ref}.fai")
 ref_dict     = file(params.ref.replaceFirst(/fasta|fa/, '') + 'dict')
 
-known_snps         = file(params.snp_vcf)
+known_snps         = params.snp_vcf ? file(params.snp_vcf) : null
 known_snps_index   = file("${params.snp_vcf}.tbi")
-known_indels       = file(params.indel_vcf)
+known_indels       = params.indel_vcf ? file(params.indel_vcf) : null
 known_indels_index = file("${params.indel_vcf}.tbi")
 
-ch_config_for_multiqc = Channel.value(file(params.multiqc_config))
-
-// --------------------------------------------------
-// INPUT BAM + BAI
-// --------------------------------------------------
-
-Channel bam_bai_files
-
-if (file(params.input_folder).listFiles().any { it.name.endsWith('.bam') }) {
-
-    bam_bai_files = Channel
-        .fromFilePairs("${params.input_folder}/*.{bam,bai}", size: 2)
-        .map { id, files -> tuple(files[0], files[1]) }
-	println "BAM files found, proceed with realignment";
-} else {
-    error "ERROR: input folder contains no BAM files"
-}
+//ch_config_for_multiqc = Channel.value(file(params.multiqc_config))
+multiqc = params.multiqc_config == 'NO_FILE'
+    ? Channel.empty()
+    : file(params.multiqc_config)
 
 // --------------------------------------------------
 // PROCESSES
@@ -89,69 +100,62 @@ if (file(params.input_folder).listFiles().any { it.name.endsWith('.bam') }) {
 
 process BASE_QUALITY_SCORE_RECALIBRATION {
 
-    tag { bam.baseName }
+    tag { bam_tag }
     cpus params.cpu
     memory "${params.mem}G"
 
-    publishDir "${params.output_folder}/BAM", mode: 'copy', pattern: "*bam*"
-    publishDir "${params.output_folder}/QC/BAM/BQSR", mode: 'copy',
-        saveAs: { f ->
-            f.contains('table') || f.contains('plots') ? f : null
-        }
-
     input:
-    tuple path(bam), path(bai)
+    tuple val(bam_tag) path(bam), path(bai)
     path known_snps
-    path known_snps_index
+//    path known_snps_index
     path known_indels
-    path known_indels_index
+//    path known_indels_index
     path ref
-    path ref_fai
-    path ref_dict
+//    path ref_fai
+//    path ref_dict
 
     output:
+	path("${bam_tag}_BQSRecalibrated.bam"), emit: bam_out
+	path("${bam_tag}_BQSRecalibrated.bai"), emit: bai_out
     path "*_recal.table", emit: recal_tables
     path "*plots.pdf",     emit: recal_plots
-    tuple val(file_tag_new),
-          path("${file_tag_new}.bam"),
-          path("${file_tag_new}.bam.bai"),
-          emit: final_bams
+
+    publishDir "${params.output_folder}/BQSR", mode: 'copy'
 
     script:
     """
-    file_tag=${bam.baseName}
-    file_tag_new=\${file_tag}_BQSRecalibrated
-
+	#!/bin/bash
+    set -euo pipefail
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
         -I ${bam} \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
-        -O \${file_tag}_recal.table
+        -O ${bam_tag}_recal.table
 
     gatk ApplyBQSR \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
         -I ${bam} \
-        --bqsr-recal-file \${file_tag}_recal.table \
-        -O \${file_tag_new}.bam
+        --bqsr-recal-file ${file_tag}_recal.table \
+        -O ${bam_tag}_BQSRecalibrated.bam
 
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I \${file_tag_new}.bam \
+        -I ${file_tag_new}.bam \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
-        -O \${file_tag_new}_recal.table
+        -O ${bam_tag}_recal.table
 
     gatk AnalyzeCovariates \
         --java-options "-Xmx${params.mem}G" \
-        -before \${file_tag}_recal.table \
-        -after  \${file_tag_new}_recal.table \
-        -plots  \${file_tag_new}_recalibration_plots.pdf
+        -before ${bam_tag}_recal.table \
+        -after  ${bam_tag}_BQSRecalibrated_recal.table \
+        -plots  ${bam_tag}_BQSRecalibrated_recalibration_plots.pdf
 
-    mv \${file_tag_new}.bai \${file_tag_new}.bam.bai
+    mv ${bam_tag}_BQSRecalibrated.bai ${bam_tag}_BQSRecalibrated.bam.bai
     """
 }
 
@@ -182,7 +186,7 @@ process MULTIQC_FINAL {
     multiqc . \
         -n multiqc_BQSR_report.html \
         -m gatk \
-        \$opt \
+        $opt \
         --comment "GATK base quality score recalibration QC report"
     """
 }
@@ -192,6 +196,20 @@ process MULTIQC_FINAL {
 // --------------------------------------------------
 
 workflow {
+
+Channel bam_bai_files
+
+if (file(params.input_folder).listFiles().any { it.name.endsWith('.bam') }) {
+
+    bam_bai_files = Channel
+        .fromFilePairs("${params.input_folder}/*.{bam,bai}", size: 2)
+        .map { id, files -> tuple(files[0], files[1]) }
+	println "BAM files found, proceed with realignment";
+} else {
+    error "ERROR: input folder contains no BAM files"
+}
+
+
 
     BASE_QUALITY_SCORE_RECALIBRATION(
         bam_bai_files,
