@@ -180,7 +180,7 @@ log.info ""
 if (params.help) {
     log.info ''
 	log.info '-------------------------------------------------------------'
-    log.info 'Usage:'
+    log.info 'USAGE:'
     log.info 'nextflow run iarcbioinfo/BQSR-nf --input_folder input/ --ref hg19.fasta [--cpu 8] [--mem 32] [--output_folder output/]'
 	log.info '-------------------------------------------------------------'
     log.info ''
