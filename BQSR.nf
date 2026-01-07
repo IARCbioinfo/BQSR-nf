@@ -66,9 +66,9 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     input:
     tuple val(bam_tag), path(bam), path(bai)
     path known_snps
-//    path known_snps_index
+    path known_snps_index
     path known_indels
-//    path known_indels_index
+    path known_indels_index
     path ref
     path ref_fai
     path ref_dict
@@ -225,9 +225,9 @@ if (params.help) {
     BASE_QUALITY_SCORE_RECALIBRATION(
         bam_bai,
         known_snps,
-  //     known_snps_index,
+		known_snps_index,
         known_indels,
-  //      known_indels_index,
+        known_indels_index,
         ref,
         ref_fai,
         ref_dict
