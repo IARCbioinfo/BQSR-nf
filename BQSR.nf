@@ -63,8 +63,6 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     cpus params.cpu
     memory "${params.mem}G"
 
-	def fixed_bam = file("${bam_tag}_fixed.bam")
-
     input:
     tuple val(bam_tag), path(bam), path(bai)
     path known_snps
@@ -93,6 +91,8 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 	fi
 
 	#echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
+
+	def fixed_bam = file("${bam_tag}_fixed.bam")
 
 	gatk AddOrReplaceReadGroups \
     	-I ${bam} \
