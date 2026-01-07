@@ -63,6 +63,8 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     cpus params.cpu
     memory "${params.mem}G"
 
+	def fixed_bam = file("${bam_tag}_fixed.bam")
+
     input:
     tuple val(bam_tag), path(bam), path(bai)
     path known_snps
@@ -94,7 +96,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 
 	gatk AddOrReplaceReadGroups \
     	-I ${bam} \
-    	-O ${bam_tag}_fixed.bam \
+    	-O ${fixed_bam} \
     	--RGID ${bam_tag} \
     	--RGLB lib1 \
     	--RGPL ILLUMINA \
@@ -104,7 +106,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam}_fixed.bam \
+        -I ${fixed_bam} \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
         -O ${bam_tag}_recal.table
@@ -112,7 +114,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     gatk ApplyBQSR \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam}_fixed.bam \
+        -I ${fixed_bam} \
         --bqsr-recal-file ${bam_tag}_recal.table \
         -O ${bam_tag}_BQSRecalibrated.bam -- CREATE_INDEX true
 
