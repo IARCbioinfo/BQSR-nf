@@ -90,10 +90,24 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 		ln -s ${bai} ${bam}.bai
 	fi
 
+	echo "[INFO] Repairing read groups for GATK compatibility"
+	samtools addreplacerg \
+        --RGID ${bam_tag} \
+        --RGSM ${bam_tag} \
+        --RGLB lib1 \
+        --RGPL ILLUMINA \
+        --RGPU unit1 \
+        -o ${bam_tag}.rgfixed.bam \
+        ${bam}
+
+	samtools index ${bam_tag}.rgfixed.bam
+
+	echo "[INFO] Running BQSR"
+
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam} \
+        -I ${bam}.rgfixed.bam \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
         -O ${bam_tag}_recal.table
@@ -101,7 +115,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     gatk ApplyBQSR \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam} \
+        -I ${bam}.rgfixed.bam \
         --bqsr-recal-file ${bam_tag}_recal.table \
         -O ${bam_tag}_BQSRecalibrated.bam
 
