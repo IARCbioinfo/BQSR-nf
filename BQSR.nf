@@ -213,7 +213,8 @@ if (params.help) {
             .map { f -> tuple(f.baseName, f) }
 			.ifEmpty { error "No BAI files found in ${params.input_folder}" }
         
-		bam_bai = bams.join(bais) // emit tag, bam, bai
+		bam_bai = bams.join(bais)
+					.map {tag, bam, bai -> tuple(tag, bam, bai)} // emit tag, bam, bai
         bam_bai.view { "BAM_BAI → $it" }
 
     BASE_QUALITY_SCORE_RECALIBRATION(
