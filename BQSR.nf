@@ -82,6 +82,8 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     publishDir "${params.output_folder}/BQSR", mode: 'copy'
 
     script:
+	def fixed_bam = "${bam_tag}_fixed.bam"
+
     """
 	#!/bin/bash
     set -euo pipefail
@@ -91,8 +93,6 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 	fi
 
 	#echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
-
-	def fixed_bam = file("${bam_tag}_fixed.bam")
 
 	gatk AddOrReplaceReadGroups \
     	-I ${bam} \
