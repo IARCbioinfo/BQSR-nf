@@ -103,36 +103,36 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     	--RGPU unit1 \
     	--RGSM ${bam_tag}
 
-    gatk BaseRecalibrator \
-        --java-options "-Xmx${params.mem}G" \
-        -R ${ref} \
-        -I ${fixed_bam} \
-        --known-sites ${known_snps} \
-        --known-sites ${known_indels} \
-        -O ${bam_tag}_recal.table
+#    gatk BaseRecalibrator \
+#        --java-options "-Xmx${params.mem}G" \
+#        -R ${ref} \
+#        -I ${fixed_bam} \
+#        --known-sites ${known_snps} \
+#        --known-sites ${known_indels} \
+#       -O ${bam_tag}_recal.table
 
-    gatk ApplyBQSR \
-        --java-options "-Xmx${params.mem}G" \
-        -R ${ref} \
-        -I ${fixed_bam} \
-        --bqsr-recal-file ${bam_tag}_recal.table \
-        -O ${bam_tag}_BQSRecalibrated.bam -- CREATE_INDEX true
+ #   gatk ApplyBQSR \
+ #       --java-options "-Xmx${params.mem}G" \
+ #       -R ${ref} \
+ #       -I ${fixed_bam} \
+ #       --bqsr-recal-file ${bam_tag}_recal.table \
+ #       -O ${bam_tag}_BQSRecalibrated.bam -- CREATE_INDEX true
 
-    gatk BaseRecalibrator \
-        --java-options "-Xmx${params.mem}G" \
-        -R ${ref} \
-        -I ${bam_tag}_BQSRecalibrated.bam \
-        --known-sites ${known_snps} \
-        --known-sites ${known_indels} \
-        -O ${bam_tag}_recal.table
+ #   gatk BaseRecalibrator \
+  #      --java-options "-Xmx${params.mem}G" \
+ #       -R ${ref} \
+  #      -I ${bam_tag}_BQSRecalibrated.bam \
+  #      --known-sites ${known_snps} \
+  #      --known-sites ${known_indels} \
+  #      -O ${bam_tag}_recal.table
 
-    gatk AnalyzeCovariates \
-        --java-options "-Xmx${params.mem}G" \
-        -before ${bam_tag}_recal.table \
-        -after  ${bam_tag}_BQSRecalibrated_recal.table \
-        -plots  ${bam_tag}_BQSRecalibrated_recalibration_plots.pdf
+  #  gatk AnalyzeCovariates \
+  #      --java-options "-Xmx${params.mem}G" \
+  #      -before ${bam_tag}_recal.table \
+  #      -after  ${bam_tag}_BQSRecalibrated_recal.table \
+  #      -plots  ${bam_tag}_BQSRecalibrated_recalibration_plots.pdf
 
-    mv ${bam_tag}_BQSRecalibrated.bai ${bam_tag}_BQSRecalibrated.bam.bai
+  #  mv ${bam_tag}_BQSRecalibrated.bai ${bam_tag}_BQSRecalibrated.bam.bai
     """
 }
 
