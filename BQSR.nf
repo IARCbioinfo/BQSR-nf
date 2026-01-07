@@ -130,7 +130,7 @@ process MULTIQC_FINAL {
     input:
     path recal_tables
     path recal_plots
-    path multiqc_config optional true
+    path multiqc_config //optional true
 
     output:
     path "*report.html", emit: report
@@ -141,7 +141,7 @@ process MULTIQC_FINAL {
     script:
     """
     set -euo pipefail
-	config_file='${multiqc_config:-}'
+	config_file='${multiqc_config}'
   	if [ "\$(basename "\$config_file")" = "NO_FILE" ]; then
         	opt=""
     	else
