@@ -90,7 +90,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 		ln -s ${bai} ${bam}.bai
 	fi
 
-	//echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
+	#echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
 
 	gatk AddOrReplaceReadGroups \
     	-I ${bam} \
