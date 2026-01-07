@@ -70,8 +70,8 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     path known_indels
 //    path known_indels_index
     path ref
-//    path ref_fai
-//    path ref_dict
+    path ref_fai
+    path ref_dict
 
     output:
 	path("${bam_tag}_BQSRecalibrated.bam"), emit: bam_out
@@ -228,9 +228,9 @@ if (params.help) {
   //     known_snps_index,
         known_indels,
   //      known_indels_index,
-        ref
-  //      ref_fai,
-  //      ref_dict
+        ref,
+        ref_fai,
+        ref_dict
     )
 
     MULTIQC_FINAL(
