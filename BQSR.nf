@@ -92,15 +92,6 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 
 	#echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
 
-#	gatk AddOrReplaceReadGroups \
-#    	-I ${bam} \
-#    	-O ${fixed_bam} \
-#    	--RGID ${bam_tag} \
-#    	--RGLB lib1 \
-#    	--RGPL ILLUMINA \
-#    	--RGPU unit1 \
-#    	--RGSM ${bam_tag}
-
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
