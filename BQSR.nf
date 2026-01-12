@@ -82,7 +82,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     publishDir "${params.output_folder}/BQSR", mode: 'copy'
 
     script:
-#	def fixed_bam = "${bam_tag}_fixed.bam"
+//	def fixed_bam = "${bam_tag}_fixed.bam"
 
     """
 	#!/bin/bash
