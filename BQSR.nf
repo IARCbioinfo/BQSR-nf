@@ -94,7 +94,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 
 	gatk AddOrReplaceReadGroups \
   		-I ${bam} \
-  		-O ${bam}_fixedRG.bam \
+  		-O ${bam_tag}_fixedRG.bam \
   		--RGID ${bam_tag} \
   		--RGLB lib1 \
   		--RGPL ILLUMINA \
@@ -105,7 +105,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
-        -I ${bam}_fixedRG.bam \
+        -I ${bam_tag}_fixedRG.bam \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
        -O ${bam_tag}_recal.table
