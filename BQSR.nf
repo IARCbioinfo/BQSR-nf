@@ -74,6 +74,8 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     path ref_dict
 
     output:
+	path("${bam_tag}_fixedRG.bam"), emit: intermediate_bam_out
+	path("${bam_tag}_fixedRG.bam.bai"), emit: intermediate_bai_out
 	path("${bam_tag}_BQSRecalibrated.bam"), emit: bam_out
 	path("${bam_tag}_BQSRecalibrated.bai"), emit: bai_out
     path "*_recal.table",  emit: recal_tables
