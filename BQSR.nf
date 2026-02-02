@@ -74,8 +74,6 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     path ref_dict
 
     output:
-	path("${bam_tag}_fixedRG.bam"), emit: intermediate_bam_out
-	path("${bam_tag}_fixedRG.bam.bai"), emit: intermediate_bai_out
 	path("${bam_tag}_BQSRecalibrated.bam"), emit: bam_out
 	path("${bam_tag}_BQSRecalibrated.bai"), emit: bai_out
     path "*_recal.table",  emit: recal_tables
@@ -92,17 +90,37 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
 		ln -s ${bai} ${bam}.bai
 	fi
 
-	#echo "[INFO] Running BQSR" - with AddOrReplaceReadGroups to avoid errors
+    gatk BaseRecalibrator \
+        --java-options "-Xmx${params.mem}G" \
+        -R ${ref} \
+        -I ${bam} \
+        --known-sites ${known_snps} \
+        --known-sites ${known_indels} \
+       -O ${bam_tag}_recal.table
 
-	gatk AddOrReplaceReadGroups \
-  		-I ${bam} \
-  		-O ${bam_tag}_fixedRG.bam \
-  		--RGID ${bam_tag} \
-  		--RGLB lib1 \
-  		--RGPL ILLUMINA \
-  		--RGPU ${bam_tag} \
-  		--RGSM ${bam_tag} \
-  		--CREATE_INDEX true
+    gatk ApplyBQSR \
+        --java-options "-Xmx${params.mem}G" \
+        -R ${ref} \
+        -I ${bam} \
+        --bqsr-recal-file ${bam_tag}_recal.table \
+        -O ${bam_tag}_BQSRecalibrated.bam -- CREATE_INDEX true
+
+    gatk BaseRecalibrator \
+        --java-options "-Xmx${params.mem}G" \
+        -R ${ref} \
+        -I ${bam_tag}_BQSRecalibrated.bam \
+        --known-sites ${known_snps} \
+        --known-sites ${known_indels} \
+        -O ${bam_tag}_recal.table
+
+    gatk AnalyzeCovariates \
+        --java-options "-Xmx${params.mem}G" \
+        -before ${bam_tag}_recal.table \
+        -after  ${bam_tag}_BQSRecalibrated_recal.table \
+        -plots  ${bam_tag}_BQSRecalibrated_recalibration_plots.pdf
+
+    mv ${bam_tag}_BQSRecalibrated.bai ${bam_tag}_BQSRecalibrated.bam.bai
+
     """
 }
 
