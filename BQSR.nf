@@ -103,7 +103,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
         -R ${ref} \
         -I ${bam} \
         --bqsr-recal-file ${bam_tag}_recal.table \
-        -O ${bam_tag}_BQSRecalibrated.bam -- CREATE_INDEX true
+        -O ${bam_tag}_BQSRecalibrated.bam
 
     gatk BaseRecalibrator \
         --java-options "-Xmx${params.mem}G" \
