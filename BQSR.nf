@@ -96,13 +96,13 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
         -I ${bam} \
         --known-sites ${known_snps} \
         --known-sites ${known_indels} \
-       -O ${bam_tag}_BQSRecalibrated_recal.table
+       -O ${bam_tag}_recal.table
 
     gatk ApplyBQSR \
         --java-options "-Xmx${params.mem}G" \
         -R ${ref} \
         -I ${bam} \
-        --bqsr-recal-file ${bam_tag}_BQSRecalibrated_recal.table \
+        --bqsr-recal-file ${bam_tag}_recal.table \
         -O ${bam_tag}_BQSRecalibrated.bam
 
     gatk BaseRecalibrator \
