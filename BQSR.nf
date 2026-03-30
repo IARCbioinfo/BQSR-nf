@@ -79,6 +79,7 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     path "*_recal.table",  emit: recal_tables
     path "*plots.pdf",     emit: recal_plots
 
+	publishDir "${params.output_folder}/BAM", mode: 'copy', pattern: "*bam*"
     publishDir "${params.output_folder}/BQSR", mode: 'copy'
 
     script:
