@@ -79,8 +79,17 @@ process BASE_QUALITY_SCORE_RECALIBRATION {
     path "*_recal.table",  emit: recal_tables
     path "*plots.pdf",     emit: recal_plots
 
-	publishDir "${params.output_folder}/BAM", mode: 'copy', pattern: "*bam*"
-    publishDir "${params.output_folder}/BQSR", mode: 'copy'
+	publishDir "${params.output_folder}", mode: 'copy', saveAs: { filename ->
+    	if (filename.endsWith('.bam') || filename.endsWith('.bam.bai')) {
+        	return "BAM/${filename}"
+    	}
+    	else if (filename.endsWith('.table') || filename.endsWith('.pdf')) {
+        	return "BQSR/${filename}"
+	    }
+    	else {
+        	return null
+    	}
+	}
 
     script:
     """
