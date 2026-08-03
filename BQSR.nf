@@ -53,6 +53,8 @@ multiqc = params.multiqc_config == 'NO_FILE'
     ? Channel.empty()
     : file(params.multiqc_config)
 
+   log.info "multiqc          = ${multiqc}"
+
 // --------------------------------------------------
 // PROCESSES
 // --------------------------------------------------
@@ -218,6 +220,7 @@ if (params.help) {
    log.info "output_folder= ${params.output_folder}"
    log.info "snp_vcf          = ${params.snp_vcf}"
    log.info "indel_vcf          = ${params.indel_vcf}"
+   log.info "multiqc_config          = ${params.multiqc_config}"
    log.info "help=${params.help}"
  }
 
